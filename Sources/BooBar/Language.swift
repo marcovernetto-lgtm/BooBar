@@ -1,0 +1,95 @@
+import Foundation
+
+enum AppLanguage: String, CaseIterable {
+    case italian = "it", english = "en"
+    var title: String { self == .italian ? "Italiano" : "English" }
+    static func load(from defaults: UserDefaults = .standard) -> AppLanguage {
+        if let saved = defaults.string(forKey: "BooBar.language"), let language = Self(rawValue: saved) { return language }
+        return Locale.preferredLanguages.first?.hasPrefix("it") == true ? .italian : .english
+    }
+    func text(_ key: BooText) -> String { self == .italian ? key.italian : key.rawValue }
+}
+
+enum BooText: String, CaseIterable {
+    case tagline = "Fewer icons. More space."
+    case organize = "Organize your bar"
+    case drag = "Hold and drag an icon"
+    case keys = "Command and Shift"
+    case hidden = "Always hidden"
+    case temporary = "On hover"
+    case visible = "Always visible"
+    case left = "Left of |"
+    case between = "Between | and :"
+    case right = "Right of :"
+    case settings = "Settings"
+    case permission = "Device control"
+    case permissionDetail = "To read icon positions."
+    case allowed = "Allowed"
+    case allow = "Allow…"
+    case alreadyAllowed = "Already granted access?"
+    case restart = "Restart BooBar"
+    case login = "Launch BooBar at login"
+    case loginDetail = "Starts in the background when you sign in."
+    case loginApproval = "Approve BooBar in macOS Login Items."
+    case loginFailure = "Could not update launch at login."
+    case loginSettings = "Open Login Items…"
+    case language = "Language"
+    case languageDetail = "Changes apply immediately."
+    case unsupported = "This macOS version does not support hiding these icons."
+    case reset = "Show all and reset"
+    case resetHelp = "Restore all icons and clear their saved zones."
+    case quit = "Quit BooBar"
+    case quitHelp = "Close BooBar and restore menu bar icons."
+    case permanentWall = "Always-hidden boundary"
+    case mainWall = "Main boundary"
+    case mainTip = "BooBar · hover to reveal · right-click for settings"
+    case permanentTip = "Left: always hidden · right: temporary"
+    case mascot = "BooB, the BooBar mascot"
+    case reversedWalls = "Move | to the left of : while holding ⌘⇧. All icons remain visible."
+    case incompleteScan = "An app is not responding. Icons remain visible: try dragging again."
+    case restartFailure = "Could not restart. Quit and reopen BooBar from Applications."
+    case nativeFailure = "macOS could not hide the icons. All icons have been restored."
+
+    var italian: String {
+        switch self {
+        case .tagline: "Meno icone. Più spazio."
+        case .organize: "Organizza la tua barra"
+        case .drag: "Tieni premuti e trascina un’icona"
+        case .keys: "Comando e Maiusc"
+        case .hidden: "Sempre nascosti"
+        case .temporary: "Al passaggio"
+        case .visible: "Sempre visibili"
+        case .left: "A sinistra di |"
+        case .between: "Tra | e :"
+        case .right: "A destra di :"
+        case .settings: "Impostazioni"
+        case .permission: "Controllo del dispositivo"
+        case .permissionDetail: "Per leggere la posizione delle icone."
+        case .allowed: "Consentito"
+        case .allow: "Consenti…"
+        case .alreadyAllowed: "Hai già dato il permesso?"
+        case .restart: "Riavvia BooBar"
+        case .login: "Avvia BooBar al login"
+        case .loginDetail: "Si apre in background all’accesso."
+        case .loginApproval: "Conferma l’autorizzazione in Elementi login di macOS."
+        case .loginFailure: "Impossibile aggiornare l’avvio al login."
+        case .loginSettings: "Apri Elementi login…"
+        case .language: "Lingua"
+        case .languageDetail: "La modifica è immediata."
+        case .unsupported: "Questa versione di macOS non espone il nascondimento necessario."
+        case .reset: "Mostra tutte e azzera"
+        case .resetHelp: "Ripristina tutte le icone e dimentica le assegnazioni precedenti."
+        case .quit: "Esci da BooBar"
+        case .quitHelp: "Chiude BooBar e ripristina le icone della barra."
+        case .permanentWall: "Confine dei sempre nascosti"
+        case .mainWall: "Confine principale"
+        case .mainTip: "BooBar · passa qui per mostrare · clic destro: impostazioni"
+        case .permanentTip: "A sinistra: sempre nascosti · a destra: temporanei"
+        case .mascot: "BooB, la mascotte di BooBar"
+        case .reversedWalls: "Sposta | a sinistra di : tenendo ⌘⇧. Le icone restano tutte visibili."
+        case .incompleteScan: "Un’app non risponde. Le icone restano visibili: riprova il trascinamento."
+        case .restartFailure: "Impossibile riavviare. Chiudi e riapri BooBar da Applicazioni."
+        case .nativeFailure: "macOS non riesce a nascondere le icone. Sono state tutte ripristinate."
+        }
+    }
+}

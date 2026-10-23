@@ -1,0 +1,11 @@
+.DS_Store
+.build/
+.tmp/
+.cache/
+backups/
+.signing/
+dist/
+graphify-out/
+.impeccable/
+docs/VERIFICA.md
+Resources/Brand/*-v1.*

@@ -7,8 +7,10 @@ Replaced the country flag with a monochrome native SF Symbols globe. The icon is
 - 13 tests passed on arm64; 13 passed as x86_64 under Rosetta, including native visibility assertion and release.
 - Native bilingual permission-state renders refreshed; globe and Italian layout inspected.
 - Universal DMG checksum verified, mounted read-only, Applications link and contained signed binary verified.
-- Built/installed/DMG binary SHA-256: `2d407c50880de5e112a54858e9b55e167940eb9c2a9ac9587e312dcb8455aee3`.
-- Installed signature verified, existing zones unchanged. App content: 1,519,659 bytes. DMG: 1,622,656 bytes.
+- Built/installed/DMG binary SHA-256: `386e7a3d5828878d4080e50b25d04008359a4eb8e0eb9296f33af80e5a0247c1`.
+- Installed signature verified, existing zones unchanged. App content: 1,519,659 bytes. DMG: 1,622,706 bytes.
 - Git prepared locally only; publishing deferred by the user. Signing keys and local backups excluded.
 
 Not checked on physical Intel hardware or older macOS; minimum macOS 27. Build locally signed, not Apple-notarized. A downloaded copy may require approval in Privacy & Security. No claim of measured live frame pacing or full keyboard/VoiceOver verification.
+
+Footer refinement: reset aligned left and quit right. Bilingual native layout render test passed; Universal app and DMG rebuilt and signature verified.

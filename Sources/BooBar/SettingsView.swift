@@ -115,12 +115,12 @@ struct SettingsView: View {
             else if !controller.nativeAvailable { notice(text(.unsupported)) }
 
             HStack(spacing: 12) {
-                Spacer(minLength: 0)
                 Button(action: controller.reset) {
                     Label(text(.reset), systemImage: "arrow.counterclockwise")
                 }
                 .buttonStyle(BooButtonStyle())
                 .help(text(.resetHelp))
+                Spacer(minLength: 0)
                 Button(action: controller.quit) { Label(text(.quit), systemImage: "power") }
                     .buttonStyle(BooButtonStyle())
                     .keyboardShortcut("q", modifiers: .command)

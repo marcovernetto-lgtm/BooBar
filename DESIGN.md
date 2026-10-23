@@ -117,7 +117,7 @@ Depth comes from translucent slate surfaces, fine borders (1pt) and a stationary
 
 ## Shapes
 
-Panels use the broad rounded token; controls and setting-icon tiles use the control token; the keyboard badge uses the shortcut token. Icons sit in square tiles (36pt), mint at 8% opacity; the language row uses a monochrome native vector Union Jack. Preserve the mascot's open silhouette and two central eyes; no white rectangular tile surrounds it.
+Panels use the broad rounded token; controls and setting-icon tiles use the control token; the keyboard badge uses the shortcut token. Icons sit in square tiles (36pt), mint at 8% opacity; the language row uses a monochrome native vector globe, identical in both languages; no country flags. Preserve the mascot's open silhouette and two central eyes; no white rectangular tile surrounds it.
 
 ## Components
 

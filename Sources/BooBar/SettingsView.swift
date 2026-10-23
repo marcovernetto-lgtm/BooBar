@@ -89,9 +89,9 @@ struct SettingsView: View {
                     }
                     Rectangle().fill(BooPalette.border).frame(height: 1)
                     HStack(spacing: 13) {
-                        BritishFlag()
-                            .foregroundStyle(BooPalette.text).frame(width: 24, height: 16)
-                            .frame(width: 36, height: 36)
+                        Image(systemName: "globe")
+                            .font(.system(size: 19, weight: .regular))
+                            .foregroundStyle(BooPalette.text).frame(width: 36, height: 36)
                             .background(BooPalette.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 4) {

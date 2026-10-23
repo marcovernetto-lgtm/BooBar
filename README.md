@@ -24,9 +24,9 @@ Two separators define the zones: **always hidden · | · on hover · : · always
 
 Due separatori definiscono le zone: **sempre nascoste · | · al passaggio · : · sempre visibili**. Passa su `:` per mostrare le temporanee; clic destro per le impostazioni. Le icone della stessa app sono gestite insieme; prevale “sempre visibili”. Reset e uscita ripristinano le icone.
 
-Uses a private macOS visibility API, which may change after an OS update. Tested on macOS 27.0.1 with Apple Silicon. Intel is cross-compiled; see [verification](docs/RELEASE-0.6.0.md) for the actual test scope.
+Uses a private macOS visibility API, which may change after an OS update. Tested on macOS 27.0.1 with Apple Silicon. Intel is cross-compiled; see [verification](docs/RELEASE-0.6.1.md) for the actual test scope.
 
-Usa un’API privata di macOS, che può cambiare con gli aggiornamenti. Provata su macOS 27.0.1 con Apple Silicon. Intel compilata separatamente; ambito delle prove in [verifica](docs/RELEASE-0.6.0.md).
+Usa un’API privata di macOS, che può cambiare con gli aggiornamenti. Provata su macOS 27.0.1 con Apple Silicon. Intel compilata separatamente; ambito delle prove in [verifica](docs/RELEASE-0.6.1.md).
 
 ## Build
 
@@ -36,7 +36,7 @@ Xcode 27, no package dependencies:
 zsh build-app.sh              # Universal: arm64 + x86_64
 zsh build-app.sh arm64        # Apple Silicon only
 zsh build-app.sh x86_64       # Intel only
-zsh package-dmg.sh            # dist/BooBar-0.6.0-universal.dmg
+zsh package-dmg.sh            # dist/BooBar-0.6.1-universal.dmg
 swift test --scratch-path .build/tests
 ```
 

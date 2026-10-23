@@ -107,7 +107,7 @@ Sources: `BooPalette.font` and [SettingsView.swift](Sources/BooBar/SettingsView.
 
 ## Layout
 
-The current Operate surface is a fixed-width panel (680pt), with content-driven height. Horizontal inset is the frontmatter token; top/bottom insets are 38/28pt. The header places title and subtitle beside a mascot frame (300 × 145pt). The three-zone ribbon, settings rows and footer form a single vertical composition without a sidebar. Pending permissions and service notices expand the height. No responsive breakpoint is implemented.
+The current Operate surface is a fixed-width panel (680pt), with a scrollable height capped at 980pt and the available screen height. Horizontal inset is the frontmatter token; top/bottom insets are 38/28pt. The header places title and subtitle beside a mascot frame (300 × 145pt). The three-zone ribbon, settings rows and footer form a single vertical composition without a sidebar. Pending permissions and service notices expand the height. No responsive breakpoint is implemented.
 
 Source: [SettingsView.swift](Sources/BooBar/SettingsView.swift). This describes the current surface, rather than requiring all future windows to share its composition.
 
@@ -129,7 +129,7 @@ The style does not define a custom focus ring. Preserve native Button keyboard/A
 
 ### Cards / Containers
 
-The zone ribbon and settings panel use their frontmatter variants, the shared border and tonal depth. Three settings rows (permission, login, language) are separated by a fine divider. The language picker changes all UI strings immediately and persists the choice. The footer has no organization count and includes a quiet linked studio credit. Permission success has a textual label and symbol; pending permission exposes an explicit action and restart helper. Login approval and service errors remain visible as text.
+The zone ribbon and settings panel use their frontmatter variants, the shared border and tonal depth. Five settings rows (permission, login, language, global shortcut, automatic updates) are separated by a fine divider. The language picker changes all UI strings immediately and persists the choice. The footer has no organization count and includes a quiet linked studio credit. Permission success has a textual label and symbol; pending permission exposes an explicit action and restart helper. Login approval and service errors remain visible as text.
 
 ### Native Switch
 
@@ -157,3 +157,5 @@ The timeline repeats over 6.4 seconds with separate hand, gaze, blink and breath
 - **Don't** equate native render review with installed-app interaction or measured live frame pacing.
 
 Evidence: current NSHostingView renders in `.build/previews/settings-{it,en}-{dark,light}-{active,pending}.png` and `mascot-*.png`. Both translations and permission states were inspected. Prior independent finish review approved the 0.5 captured settings and articulated mascot; the 0.6 refinement was reviewed in-thread. These captures do not prove installed-app interaction or live frame pacing.
+
+Version 0.7 adds native shortcut recording and opt-out automatic updates. Preserve Escape cancellation, Delete clearing, collision feedback, busy/error status and scrolling on smaller displays. Public README remains download-focused.

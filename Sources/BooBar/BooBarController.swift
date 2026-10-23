@@ -4,6 +4,7 @@ import SwiftUI
 import MenuBarBridge
 import ServiceManagement
 import os
+import Carbon
 
 @MainActor
 final class BooBarController: NSObject, NSApplicationDelegate, NSWindowDelegate, ObservableObject {
@@ -23,6 +24,7 @@ final class BooBarController: NSObject, NSApplicationDelegate, NSWindowDelegate,
     private var mode = BarMode.suspended
     let nativeAvailable = HBMenuBar.available
 
+    let updater = UpdateManager()
     private let engine = HBMenuBar()
     private let log = Logger(subsystem: "it.marcovernetto.BooBar", category: "MenuBar")
     private var zones = Zones()
@@ -31,7 +33,14 @@ final class BooBarController: NSObject, NSApplicationDelegate, NSWindowDelegate,
     private var settings: NSWindow?
     private var timer: Timer?
     private var lastGesture = Date.distantPast
-    private var lastMenuPresence = Date()
+    private var interaction = BarInteraction()
+    private var timerInterval: TimeInterval = 0.5
+    private var suppressArrangement = false
+    private let hotkey = GlobalShortcut()
+    private var shortcutMonitor: Any?
+    @Published private(set) var recordingShortcut = false
+    @Published private(set) var shortcutError = false
+    @Published private(set) var shortcut: Shortcut? = UserDefaults.standard.data(forKey: "BooBar.shortcut").flatMap { try? JSONDecoder().decode(Shortcut.self, from: $0) }
     private var hoverStart: Date?
     private var permissionCheck = Date.distantPast
     private var scanning = false
@@ -61,15 +70,20 @@ final class BooBarController: NSObject, NSApplicationDelegate, NSWindowDelegate,
             name: NSWorkspace.didTerminateApplicationNotification, object: nil)
         mode = zones.suspended || zones.assignments.isEmpty ? .suspended : .collapsed
         apply()
-        if !UserDefaults.standard.bool(forKey: "BooBar.didShowWelcome") || !authorized {
+        let event = NSAppleEventManager.shared().currentAppleEvent
+        let login = event?.paramDescriptor(forKeyword: AEKeyword(keyAEPropData))?.enumCodeValue == OSType(keyAELaunchedAsLogInItem)
+            || event?.paramDescriptor(forKeyword: AEKeyword(keyAELaunchedAsLogInItem))?.booleanValue == true
+        let background = ProcessInfo.processInfo.arguments.contains("--background")
+        if BarInteraction.opensSettings(login: login, background: background,
+            welcomed: UserDefaults.standard.bool(forKey: "BooBar.didShowWelcome"), authorized: authorized) {
             showSettings()
             UserDefaults.standard.set(true, forKey: "BooBar.didShowWelcome")
         }
-        timer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.tick() }
-        }
-        timer?.tolerance = 0.05
-        if !authorized {
+        updater.start()
+        scheduleTimer(0.5)
+        hotkey.action = { [weak self] in self?.toggleFromShortcut() }
+        if let shortcut { shortcutError = !hotkey.register(shortcut) }
+        if !authorized && !login && !background {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in self?.requestPermission() }
         }
         log.notice("Avvio BooBar: Accessibility=\(self.authorized), nativeAPI=\(self.nativeAvailable), impostazioni=\(self.settingsVisible), login=\(self.loginItemStatus.rawValue)")
@@ -84,7 +98,10 @@ final class BooBarController: NSObject, NSApplicationDelegate, NSWindowDelegate,
         refreshPermission()
         refreshLoginItem()
     }
-    func applicationWillTerminate(_ notification: Notification) { engine.restore() }
+    func applicationDidResignActive(_ notification: Notification) { cancelShortcutRecording() }
+    func applicationWillTerminate(_ notification: Notification) {
+        cancelShortcutRecording(); hotkey.stop(); timer?.invalidate(); updater.stop(); engine.restore()
+    }
 
     private func wall(_ title: String, autosave: String, action: Selector) -> NSStatusItem {
         let item = NSStatusBar.system.statusItem(withLength: 22)
@@ -163,7 +180,7 @@ final class BooBarController: NSObject, NSApplicationDelegate, NSWindowDelegate,
 
     func openLoginSettings() { SMAppService.openSystemSettingsLoginItems() }
 
-    func windowWillClose(_ notification: Notification) { settingsVisible = false }
+    func windowWillClose(_ notification: Notification) { settingsVisible = false; cancelShortcutRecording() }
 
     func windowDidChangeOcclusionState(_ notification: Notification) {
         settingsVisible = settings?.occlusionState.contains(.visible) == true
@@ -226,25 +243,30 @@ final class BooBarController: NSObject, NSApplicationDelegate, NSWindowDelegate,
 
     private func transition(_ newMode: BarMode) {
         mode = newMode
-        lastMenuPresence = Date()
+        interaction.lastPresence = Date()
+        if newMode != .expanded { interaction.pinned = false }
         alwaysWall.isVisible = newMode.showsSecondWall && authorized
         apply()
     }
 
     private func tick() {
-        if Date().timeIntervalSince(permissionCheck) > 1 {
+        if Date().timeIntervalSince(permissionCheck) > (settingsVisible ? 1 : 5) {
             permissionCheck = Date()
             refreshPermission()
         }
         guard authorized, nativeAvailable, let wallFrame = frame(mainWall) else { return }
+        let pointer = NSEvent.mouseLocation
+        let nearBar = NSScreen.screens.contains { $0.frame.contains(pointer) && pointer.y > $0.frame.maxY - 80 }
+        scheduleTimer(BarInteraction.interval(expanded: mode == .expanded || mode == .arranging, nearBar: nearBar))
         let flags = NSEvent.modifierFlags
+        if !flags.contains(.command) && !flags.contains(.control) { suppressArrangement = false }
+        guard !recordingShortcut, !suppressArrangement else { return }
         let moving = flags.contains(.command) && (flags.contains(.shift) || NSEvent.pressedMouseButtons != 0)
         if moving { beginArrangement(); return }
         if mode == .arranging {
             if NSEvent.pressedMouseButtons == 0 && Date().timeIntervalSince(lastGesture) > 0.6 { commitPositions() }
             return
         }
-        let pointer = NSEvent.mouseLocation
         if wallFrame.insetBy(dx: -4, dy: 0).contains(pointer), mode == .collapsed {
             if let start = hoverStart, Date().timeIntervalSince(start) > 0.18 { transition(.expanded) }
             else if hoverStart == nil { hoverStart = Date() }
@@ -254,9 +276,58 @@ final class BooBarController: NSObject, NSApplicationDelegate, NSWindowDelegate,
                 $0.frame.minX <= pointer.x && pointer.x <= $0.frame.maxX &&
                 $0.frame.maxY - NSStatusBar.system.thickness - 3 <= pointer.y && pointer.y <= $0.frame.maxY
             }
-            if inMenuBar || NSEvent.pressedMouseButtons != 0 || menuIsOpen() { lastMenuPresence = Date() }
-            else if Date().timeIntervalSince(lastMenuPresence) > 1.2 { transition(.collapsed) }
+            // Query window metadata only once the pointer has actually left the bar.
+            let pressed = NSEvent.pressedMouseButtons != 0
+            let popup = !inMenuBar && !pressed && !interaction.pinned && menuIsOpen()
+            if interaction.shouldCollapse(now: Date(), inBar: inMenuBar, pressed: pressed, popup: popup) { transition(.collapsed) }
         }
+    }
+
+    private func scheduleTimer(_ interval: TimeInterval) {
+        guard timer == nil || interval != timerInterval else { return }
+        timer?.invalidate(); timerInterval = interval
+        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.tick() }
+        }
+        timer?.tolerance = interval * 0.2
+    }
+
+    private func toggleFromShortcut() {
+        guard authorized, nativeAvailable, mode != .arranging, !recordingShortcut else { return }
+        suppressArrangement = true
+        let expand = mode != .expanded
+        transition(expand ? .expanded : .collapsed)
+        interaction.pinned = expand
+    }
+
+    func recordShortcut() {
+        guard !recordingShortcut else { cancelShortcutRecording(); return }
+        recordingShortcut = true; shortcutError = false
+        shortcutMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            let consumed = MainActor.assumeIsolated {
+                guard let self else { return false }
+                if event.keyCode == 53 { self.cancelShortcutRecording(); return true }
+                if event.keyCode == 51 || event.keyCode == 117 { self.setShortcut(nil); return true }
+                guard !event.isARepeat, let value = Shortcut.capture(event) else { self.shortcutError = true; return true }
+                self.setShortcut(value)
+                return true
+            }
+            return consumed ? nil : event
+        }
+    }
+
+    func setShortcut(_ value: Shortcut?) {
+        if !hotkey.register(value) { shortcutError = true; return }
+        shortcut = value
+        if let value, let data = try? JSONEncoder().encode(value) { UserDefaults.standard.set(data, forKey: "BooBar.shortcut") }
+        else { UserDefaults.standard.removeObject(forKey: "BooBar.shortcut") }
+        shortcutError = false
+        cancelShortcutRecording()
+    }
+
+    private func cancelShortcutRecording() {
+        if let shortcutMonitor { NSEvent.removeMonitor(shortcutMonitor) }
+        shortcutMonitor = nil; recordingShortcut = false
     }
 
     private func commitPositions() {
@@ -352,7 +423,21 @@ final class BooBarController: NSObject, NSApplicationDelegate, NSWindowDelegate,
     private func menuIsOpen() -> Bool {
         guard let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else { return false }
         let menuLevel = Int(CGWindowLevelForKey(.popUpMenuWindow))
-        return windows.contains { ($0[kCGWindowLayer as String] as? Int) == menuLevel }
+        let pointer = NSEvent.mouseLocation
+        let top = NSScreen.screens.first?.frame.maxY ?? 0
+        let point = CGPoint(x: pointer.x, y: top - pointer.y)
+        return windows.contains { window in
+            let level = window[kCGWindowLayer as String] as? Int ?? 0
+            if level == menuLevel { return true }
+            guard level > 0, let value = window[kCGWindowBounds as String] as? [String: Any],
+                  let bounds = CGRect(dictionaryRepresentation: value as CFDictionary),
+                  bounds.height > NSStatusBar.system.thickness, bounds.contains(point) else { return false }
+            // Status-item popovers are floating panels, not necessarily NSMenu windows.
+            return NSScreen.screens.contains {
+                let menuTop = top - $0.frame.maxY
+                return bounds.minY >= menuTop - 4 && bounds.minY <= menuTop + NSStatusBar.system.thickness + 16
+            }
+        }
     }
 
     private func save() {

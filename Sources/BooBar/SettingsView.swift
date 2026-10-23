@@ -5,7 +5,8 @@ struct SettingsView: View {
     private func text(_ key: BooText) -> String { controller.language.text(key) }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 25) {
+        ScrollView {
+        VStack(alignment: .leading, spacing: 22) {
             HStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("BooBar").font(BooPalette.font(32, strong: true)).tracking(-0.6)
@@ -105,6 +106,20 @@ struct SettingsView: View {
                             }
                         }.labelsHidden().frame(width: 128)
                     }
+                    Rectangle().fill(BooPalette.border).frame(height: 1)
+                    HStack(spacing: 13) {
+                        settingIcon("keyboard")
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(text(.shortcut)).font(BooPalette.font(13, strong: true))
+                            Text(text(.shortcutHint)).font(BooPalette.font(11)).foregroundStyle(BooPalette.muted)
+                        }
+                        Spacer(minLength: 8)
+                        Button(controller.recordingShortcut ? text(.shortcutRecording) : controller.shortcut?.label ?? text(.shortcutRecord), action: controller.recordShortcut)
+                            .buttonStyle(BooButtonStyle())
+                    }
+                    if controller.shortcutError { notice(text(.shortcutConflict)) }
+                    Rectangle().fill(BooPalette.border).frame(height: 1)
+                    UpdateSettings(manager: controller.updater, language: controller.language)
                 }
                 .padding(21)
                 .background(BooPalette.panel.opacity(0.78), in: RoundedRectangle(cornerRadius: 18))
@@ -134,8 +149,8 @@ struct SettingsView: View {
             }
         }
         .padding(.horizontal, 32).padding(.top, 38).padding(.bottom, 28)
-        .frame(width: 680)
-        .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(width: 680, height: min(980, (NSScreen.main?.visibleFrame.height ?? 1028) - 48))
         .font(BooPalette.font(13)).foregroundStyle(BooPalette.text)
         .background {
             ZStack {
@@ -172,5 +187,30 @@ struct SettingsView: View {
         Label(text, systemImage: "exclamationmark.triangle")
             .font(BooPalette.font(12)).foregroundStyle(Color(boobarHex: 0xeab47b))
             .fixedSize(horizontal: false, vertical: true)
+    }
+}
+
+private struct UpdateSettings: View {
+    @ObservedObject var manager: UpdateManager
+    let language: AppLanguage
+    var body: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            HStack(spacing: 13) {
+                Image(systemName: "arrow.down.circle").font(.system(size: 19))
+                    .foregroundStyle(BooPalette.accent).frame(width: 36, height: 36)
+                    .background(BooPalette.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(language.text(.updates)).font(BooPalette.font(13, strong: true))
+                    Text(language.text(manager.status)).font(BooPalette.font(11)).foregroundStyle(BooPalette.muted)
+                }
+                Spacer(minLength: 8)
+                Toggle(language.text(.updates), isOn: $manager.enabled)
+                    .labelsHidden().toggleStyle(.switch).tint(BooPalette.primary)
+            }
+            Button(language.text(.updateCheck)) { Task { await manager.check(manual: true) } }
+                .buttonStyle(.plain).foregroundStyle(BooPalette.accent).font(BooPalette.font(12))
+                .disabled(manager.busy)
+        }
     }
 }

@@ -10,11 +10,11 @@ powered by [unshapedstudio](https://unshapedstudio.com/)
 
 Hide the menu bar icons you rarely use. Three zones: **always visible, reveal on hover, always hidden**. Hold **⌘⇧** and drag icons to organize them.
 
-### [Download DMG — Apple Silicon + Intel](https://github.com/marcovernetto-lgtm/BooBar/releases/download/v0.6.1/BooBar-0.6.1-universal.dmg)
+### [Download DMG — Apple Silicon + Intel](https://github.com/marcovernetto-lgtm/BooBar/releases/download/v0.7.0/BooBar-0.7.0-universal.dmg)
 
 Requires **macOS 27**. Open the DMG and drag **BooBar → Applications**. BooBar guides you through the required permission.
 
-English/Italian. Optional launch at login. Right-click `:` to open settings.
+English/Italian. Custom keyboard shortcut, automatic updates from GitHub, optional launch at login. Right-click `:` to open settings.
 
 ---
 
@@ -22,8 +22,8 @@ English/Italian. Optional launch at login. Right-click `:` to open settings.
 
 Nascondi le icone che usi meno nella barra menu. Tre zone: **sempre visibili, al passaggio, sempre nascoste**. Tieni **⌘⇧** e trascina le icone per organizzarle.
 
-### [Scarica DMG — Apple Silicon + Intel](https://github.com/marcovernetto-lgtm/BooBar/releases/download/v0.6.1/BooBar-0.6.1-universal.dmg)
+### [Scarica DMG — Apple Silicon + Intel](https://github.com/marcovernetto-lgtm/BooBar/releases/download/v0.7.0/BooBar-0.7.0-universal.dmg)
 
 Richiede **macOS 27**. Apri il DMG e trascina **BooBar → Applicazioni**. BooBar ti guida nel concedere il permesso necessario.
 
-Italiano/inglese. Avvio al login facoltativo. Clic destro su `:` per aprire le impostazioni.
+Italiano/inglese. Scorciatoia personalizzabile, aggiornamenti automatici da GitHub, avvio al login facoltativo. Clic destro su `:` per aprire le impostazioni.

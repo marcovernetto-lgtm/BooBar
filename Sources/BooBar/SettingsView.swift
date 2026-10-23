@@ -6,26 +6,26 @@ struct SettingsView: View {
 
     var body: some View {
         ScrollView {
-        VStack(alignment: .leading, spacing: 22) {
+        VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("BooBar").font(BooPalette.font(32, strong: true)).tracking(-0.6)
+                    Text("BooBar").font(BooPalette.font(28, strong: true)).tracking(-0.6)
                     Text(text(.tagline))
                         .font(BooPalette.font(14)).foregroundStyle(BooPalette.muted)
                 }
                 Spacer(minLength: 0)
-                AnimatedMascot(active: controller.settingsVisible)
+                AnimatedMascot(active: controller.settingsVisible, width: 230)
                     .accessibilityLabel(text(.mascot))
             }
 
-            VStack(alignment: .leading, spacing: 15) {
+            VStack(alignment: .leading, spacing: 11) {
                 Text(text(.organize)).font(BooPalette.font(16, strong: true))
                 HStack(spacing: 12) {
-                    Text("⌘⇧").font(.system(size: 25, weight: .medium, design: .monospaced))
+                    Text("⌘⇧").font(.system(size: 22, weight: .medium, design: .monospaced))
                         .padding(.horizontal, 12).padding(.vertical, 7)
                         .background(BooPalette.panel, in: RoundedRectangle(cornerRadius: 8))
                         .accessibilityLabel(text(.keys))
-                    Text(text(.drag)).font(BooPalette.font(16)).foregroundStyle(BooPalette.muted)
+                    Text(text(.drag)).font(BooPalette.font(14)).foregroundStyle(BooPalette.muted)
                 }
                 HStack(spacing: 12) {
                     zone(text(.hidden), symbol: "eye.slash", detail: text(.left))
@@ -34,14 +34,14 @@ struct SettingsView: View {
                     wall(":")
                     zone(text(.visible), symbol: "eye", detail: text(.right))
                 }
-                .padding(.horizontal, 18).padding(.vertical, 21)
+                .padding(.horizontal, 14).padding(.vertical, 14)
                 .background(BooPalette.panel.opacity(0.55), in: RoundedRectangle(cornerRadius: 18))
                 .overlay(RoundedRectangle(cornerRadius: 18).stroke(BooPalette.border, lineWidth: 1))
             }
 
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 11) {
                 Text(text(.settings)).font(BooPalette.font(16, strong: true))
-                VStack(alignment: .leading, spacing: 17) {
+                VStack(alignment: .leading, spacing: 10) {
                     HStack(spacing: 13) {
                         settingIcon("hand.raised")
                         VStack(alignment: .leading, spacing: 4) {
@@ -92,7 +92,7 @@ struct SettingsView: View {
                     HStack(spacing: 13) {
                         Image(systemName: "globe")
                             .font(.system(size: 19, weight: .regular))
-                            .foregroundStyle(BooPalette.text).frame(width: 36, height: 36)
+                            .foregroundStyle(BooPalette.text).frame(width: 30, height: 30)
                             .background(BooPalette.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 4) {
@@ -121,7 +121,7 @@ struct SettingsView: View {
                     Rectangle().fill(BooPalette.border).frame(height: 1)
                     UpdateSettings(manager: controller.updater, language: controller.language)
                 }
-                .padding(21)
+                .padding(16)
                 .background(BooPalette.panel.opacity(0.78), in: RoundedRectangle(cornerRadius: 18))
                 .overlay(RoundedRectangle(cornerRadius: 18).stroke(BooPalette.border, lineWidth: 1))
             }
@@ -148,9 +148,9 @@ struct SettingsView: View {
                 Spacer()
             }
         }
-        .padding(.horizontal, 32).padding(.top, 38).padding(.bottom, 28)
+        .padding(.horizontal, 24).padding(.top, 30).padding(.bottom, 20)
         }
-        .frame(width: 680, height: min(980, (NSScreen.main?.visibleFrame.height ?? 1028) - 48))
+        .frame(width: 620, height: min(790, (NSScreen.main?.visibleFrame.height ?? 880) - 100))
         .font(BooPalette.font(13)).foregroundStyle(BooPalette.text)
         .background {
             ZStack {
@@ -178,7 +178,7 @@ struct SettingsView: View {
 
     private func settingIcon(_ name: String) -> some View {
         Image(systemName: name).font(.system(size: 17))
-            .foregroundStyle(BooPalette.accent).frame(width: 36, height: 36)
+            .foregroundStyle(BooPalette.accent).frame(width: 30, height: 30)
             .background(BooPalette.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
             .accessibilityHidden(true)
     }
@@ -197,7 +197,7 @@ private struct UpdateSettings: View {
         VStack(alignment: .leading, spacing: 9) {
             HStack(spacing: 13) {
                 Image(systemName: "arrow.down.circle").font(.system(size: 19))
-                    .foregroundStyle(BooPalette.accent).frame(width: 36, height: 36)
+                    .foregroundStyle(BooPalette.accent).frame(width: 30, height: 30)
                     .background(BooPalette.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 4) {

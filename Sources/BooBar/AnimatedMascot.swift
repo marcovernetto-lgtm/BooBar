@@ -117,6 +117,7 @@ enum BooVector {
 
 struct MascotFrame: View {
     let pose: MascotPose
+    var width: CGFloat = 300
     var body: some View {
         Canvas { context, size in
             let scale = min(size.width / 400, size.height / 190)
@@ -131,7 +132,7 @@ struct MascotFrame: View {
                 }
             }
         }
-        .frame(width: 300, height: 145)
+        .frame(width: width, height: width * 145 / 300)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("BooB")
     }
@@ -139,11 +140,12 @@ struct MascotFrame: View {
 
 struct AnimatedMascot: View {
     let active: Bool
+    var width: CGFloat = 300
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var started = Date()
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !active || reduceMotion)) { context in
-            MascotFrame(pose: active ? .at(context.date.timeIntervalSince(started), reducedMotion: reduceMotion) : .resting)
+            MascotFrame(pose: active ? .at(context.date.timeIntervalSince(started), reducedMotion: reduceMotion) : .resting, width: width)
         }
         .onChange(of: active) { _, visible in if visible { started = Date() } }
     }

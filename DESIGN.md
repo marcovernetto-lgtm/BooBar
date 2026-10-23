@@ -13,7 +13,7 @@ colors:
 typography:
   display:
     fontFamily: AvenirNext-DemiBold
-    fontSize: 32px
+    fontSize: 28px
     letterSpacing: -0.6px
   title:
     fontFamily: AvenirNext-DemiBold
@@ -101,13 +101,13 @@ Source: [BooPalette.swift](Sources/BooBar/BooPalette.swift); warning and panel o
 
 ### Hierarchy
 
-The frontmatter records the reused display, section-title, body, action-label and caption styles. The subtitle uses regular Avenir Next (14pt); row titles use DemiBold (13pt); helper and inline-action text also use regular (12pt). The Command-Shift badge uses 25pt system monospace, with 16pt instruction text. SwiftUI supplies line metrics; there is no custom line-height or font fallback declaration.
+The frontmatter records the reused display, section-title, body, action-label and caption styles. The subtitle uses regular Avenir Next (14pt); row titles use DemiBold (13pt); helper and inline-action text also use regular (12pt). The Command-Shift badge uses 22pt system monospace, with 16pt instruction text. SwiftUI supplies line metrics; there is no custom line-height or font fallback declaration.
 
 Sources: `BooPalette.font` and [SettingsView.swift](Sources/BooBar/SettingsView.swift). Portable frontmatter uses pixel labels for the observed numeric values; native SwiftUI geometry and type are measured in points.
 
 ## Layout
 
-The current Operate surface is a fixed-width panel (680pt), with a scrollable height capped at 980pt and the available screen height. Horizontal inset is the frontmatter token; top/bottom insets are 38/28pt. The header places title and subtitle beside a mascot frame (300 × 145pt). The three-zone ribbon, settings rows and footer form a single vertical composition without a sidebar. Pending permissions and service notices expand the height. No responsive breakpoint is implemented.
+The current Operate surface is a fixed-width panel (620pt), with a scrollable height capped at 790pt and the available screen height. Horizontal inset is the frontmatter token; top/bottom insets are 30/20pt. The header places title and subtitle beside a mascot frame (230 × 111pt). The three-zone ribbon, settings rows and footer form a single vertical composition without a sidebar. Pending permissions and service notices expand the height. No responsive breakpoint is implemented.
 
 Source: [SettingsView.swift](Sources/BooBar/SettingsView.swift). This describes the current surface, rather than requiring all future windows to share its composition.
 
@@ -117,7 +117,7 @@ Depth comes from translucent slate surfaces, fine borders (1pt) and a stationary
 
 ## Shapes
 
-Panels use the broad rounded token; controls and setting-icon tiles use the control token; the keyboard badge uses the shortcut token. Icons sit in square tiles (36pt), mint at 8% opacity; the language row uses a monochrome native vector globe, identical in both languages; no country flags. Preserve the mascot's open silhouette and two central eyes; no white rectangular tile surrounds it.
+Panels use the broad rounded token; controls and setting-icon tiles use the control token; the keyboard badge uses the shortcut token. Icons sit in square tiles (30pt), mint at 8% opacity; the language row uses a monochrome native vector globe, identical in both languages; no country flags. Preserve the mascot's open silhouette and two central eyes; no white rectangular tile surrounds it.
 
 ## Components
 

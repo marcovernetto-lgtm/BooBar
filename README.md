@@ -4,11 +4,11 @@ powered by [unshapedstudio](https://unshapedstudio.com/)
 
 [English](#english) · [Italiano](#italiano)
 
+![BooBar](docs/settings-en.png)
+
 ## English
 
 Hide the menu bar icons you rarely use. Three zones: **always visible, reveal on hover, always hidden**. Hold **⌘⇧** and drag icons to organize them.
-
-![BooBar settings in English](docs/settings-en.png)
 
 ### Install
 
@@ -45,8 +45,6 @@ Builds use a persistent local signing identity in `.signing/` (never commit or s
 ## Italiano
 
 Nascondi le icone che usi meno nella barra menu. Tre zone: **sempre visibili, al passaggio, sempre nascoste**. Tieni **⌘⇧** e trascina le icone per organizzarle.
-
-![Impostazioni di BooBar in italiano](docs/settings-it.png)
 
 ### Installazione
 

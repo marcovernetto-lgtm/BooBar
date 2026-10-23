@@ -9,7 +9,7 @@ Replaced the country flag with a monochrome native SF Symbols globe. The icon is
 - Universal DMG checksum verified, mounted read-only, Applications link and contained signed binary verified.
 - Built/installed/DMG binary SHA-256: `386e7a3d5828878d4080e50b25d04008359a4eb8e0eb9296f33af80e5a0247c1`.
 - Installed signature verified, existing zones unchanged. App content: 1,519,659 bytes. DMG: 1,622,706 bytes.
-- Git prepared locally only; publishing deferred by the user. Signing keys and local backups excluded.
+- Release repository prepared without signing keys or local backups.
 
 Not checked on physical Intel hardware or older macOS; minimum macOS 27. Build locally signed, not Apple-notarized. A downloaded copy may require approval in Privacy & Security. No claim of measured live frame pacing or full keyboard/VoiceOver verification.
 

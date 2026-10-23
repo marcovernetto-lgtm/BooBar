@@ -10,6 +10,8 @@ powered by [unshapedstudio](https://unshapedstudio.com/)
 
 ## Install / Installa
 
+[Download / Scarica](https://github.com/marcovernetto-lgtm/BooBar/releases/latest)
+
 Open the DMG and drag **BooBar → Applications**. / Apri il DMG e trascina **BooBar → Applicazioni**.
 
 **macOS 27**, Apple Silicon + Intel (Universal). Accessibility permission required; BooBar opens the exact settings pane. English/Italian, optional launch at login. No network requests or third-party runtime dependencies.

@@ -4,9 +4,9 @@ import SwiftUI
 import ImageIO
 import UniformTypeIdentifiers
 import MenuBarBridge
-@testable import BooBar
+@testable import GhostBar
 
-final class BooBarTests: XCTestCase {
+final class GhostBarTests: XCTestCase {
     func testDraggingAcrossBothWallsAssignsThreeZones() throws {
         var zones = Zones()
         try zones.arrange([
@@ -150,7 +150,7 @@ final class BooBarTests: XCTestCase {
             let style = layer.stroke > 0 ? "fill=\"none\" stroke=\"\(paint)\" stroke-width=\"\(layer.stroke)\" stroke-linecap=\"round\" stroke-linejoin=\"round\"" : "fill=\"\(paint)\" fill-rule=\"evenodd\""
             return "<path id=\"\(layer.name)\" d=\"\(svgPath(layer.path))\" \(style)/>"
         }.joined(separator: "\n")
-        let svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 400 190\"><title>BooB — BooBar</title><rect id=\"preview-background\" width=\"400\" height=\"190\" fill=\"#0e171b\"/>\n" + paths + "\n</svg>"
+        let svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 400 190\"><title>Ghosty — GhostBar</title><rect id=\"preview-background\" width=\"400\" height=\"190\" fill=\"#0e171b\"/>\n" + paths + "\n</svg>"
         try svg.write(to: root.appendingPathComponent("Resources/Brand/boob-mascot-v2.svg"), atomically: true, encoding: .utf8)
     }
 

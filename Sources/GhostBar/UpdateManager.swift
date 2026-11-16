@@ -28,10 +28,12 @@ struct GitHubRelease: Decodable {
     let assets: [Asset]
     func update(from current: String) -> Asset? {
         guard !draft, !prerelease, let next = ReleaseVersion(tag_name), let installed = ReleaseVersion(current), next > installed else { return nil }
+        let ver = tag_name.dropFirst(tag_name.hasPrefix("v") ? 1 : 0)
         return assets.first {
-            $0.name == "BooBar-\(tag_name.dropFirst(tag_name.hasPrefix("v") ? 1 : 0))-universal.dmg" &&
+            ($0.name == "GhostBar-\(ver)-universal.dmg" || $0.name == "BooBar-\(ver)-universal.dmg") &&
             $0.browser_download_url.scheme == "https" && $0.browser_download_url.host == "github.com" &&
-            $0.browser_download_url.path.hasPrefix("/marcovernetto-lgtm/BooBar/releases/download/") &&
+            ($0.browser_download_url.path.hasPrefix("/marcovernetto-lgtm/GhostBar/releases/download/") ||
+             $0.browser_download_url.path.hasPrefix("/marcovernetto-lgtm/BooBar/releases/download/")) &&
             $0.size > 0 && $0.size <= 50_000_000 && $0.digest?.hasPrefix("sha256:") == true
         }
     }
@@ -47,7 +49,7 @@ final class UpdateManager: ObservableObject {
     }
     @Published private(set) var status: BooText = .updateReady
     @Published private(set) var busy = false
-    private let log = Logger(subsystem: "it.marcovernetto.BooBar", category: "Updater")
+    private let log = Logger(subsystem: "it.marcovernetto.GhostBar", category: "Updater")
     private var timer: Timer?
     private var task: Task<Void, Never>?
     func start() {
@@ -74,11 +76,15 @@ final class UpdateManager: ObservableObject {
             config.timeoutIntervalForResource = 180
             let session = URLSession(configuration: config)
             defer { session.invalidateAndCancel() }
-            var request = URLRequest(url: URL(string: "https://api.github.com/repos/marcovernetto-lgtm/BooBar/releases/latest")!)
-            request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-            request.setValue("BooBar", forHTTPHeaderField: "User-Agent")
-            let (data, response) = try await session.data(for: request)
-            guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw UpdateFailure.invalid }
+            var releaseData: Data?
+            for repo in ["GhostBar", "BooBar"] {
+                var request = URLRequest(url: URL(string: "https://api.github.com/repos/marcovernetto-lgtm/\(repo)/releases/latest")!)
+                request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+                request.setValue("GhostBar", forHTTPHeaderField: "User-Agent")
+                let (data, response) = try await session.data(for: request)
+                if (response as? HTTPURLResponse)?.statusCode == 200 { releaseData = data; break }
+            }
+            guard let data = releaseData else { throw UpdateFailure.invalid }
             let release = try JSONDecoder().decode(GitHubRelease.self, from: data)
             let current = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0.0"
             guard let latest = ReleaseVersion(release.tag_name), let installed = ReleaseVersion(current) else { throw UpdateFailure.invalid }
@@ -93,7 +99,7 @@ final class UpdateManager: ObservableObject {
             let content = try Data(contentsOf: download, options: .mappedIfSafe)
             guard content.count == asset.size,
                   "sha256:" + SHA256.hash(data: content).map({ String(format: "%02x", $0) }).joined() == asset.digest else { throw UpdateFailure.invalid }
-            let folder = FileManager.default.temporaryDirectory.appendingPathComponent("BooBar-update-" + UUID().uuidString)
+            let folder = FileManager.default.temporaryDirectory.appendingPathComponent("GhostBar-update-" + UUID().uuidString)
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: false, attributes: [.posixPermissions: 0o700])
             workspace = folder
             let image = folder.appendingPathComponent("update.dmg")
@@ -102,9 +108,10 @@ final class UpdateManager: ObservableObject {
             try FileManager.default.createDirectory(at: volume, withIntermediateDirectories: false)
             try await Self.run("/usr/bin/hdiutil", ["attach", "-readonly", "-nobrowse", "-mountpoint", volume.path, image.path])
             mount = volume
-            let source = volume.appendingPathComponent("BooBar.app")
+            let ghostSource = volume.appendingPathComponent("GhostBar.app")
+            let source = FileManager.default.fileExists(atPath: ghostSource.path) ? ghostSource : volume.appendingPathComponent("BooBar.app")
             try Self.verify(source, matches: Bundle.main.bundleURL, version: release.tag_name)
-            let staged = folder.appendingPathComponent("BooBar.app")
+            let staged = folder.appendingPathComponent("GhostBar.app")
             try await Self.run("/usr/bin/ditto", [source.path, staged.path])
             try Self.verify(staged, matches: Bundle.main.bundleURL, version: release.tag_name)
             try await Self.run("/usr/bin/hdiutil", ["detach", volume.path]); mount = nil

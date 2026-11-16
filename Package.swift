@@ -2,12 +2,12 @@
 import PackageDescription
 
 let package = Package(
-    name: "BooBar",
+    name: "GhostBar",
     platforms: [.macOS("27.0")],
-    products: [.executable(name: "BooBar", targets: ["BooBar"])],
+    products: [.executable(name: "GhostBar", targets: ["GhostBar"])],
     targets: [
         .target(name: "MenuBarBridge", path: "Sources/MenuBarBridge", publicHeadersPath: "include"),
-        .executableTarget(name: "BooBar", dependencies: ["MenuBarBridge"], path: "Sources/BooBar"),
-        .testTarget(name: "BooBarTests", dependencies: ["BooBar"], path: "Tests")
+        .executableTarget(name: "GhostBar", dependencies: ["MenuBarBridge"], path: "Sources/GhostBar"),
+        .testTarget(name: "GhostBarTests", dependencies: ["GhostBar"], path: "Tests")
     ]
 )

@@ -43,19 +43,22 @@ struct MascotLayer {
 enum BooVector {
     static let cream: UInt32 = 0xedf3f3
     static let ink: UInt32 = 0x0e171b
+    static let ghostFill: UInt32 = 0x18262b
+    static let ghostStroke: UInt32 = 0x287c83
 
     static let letter: Path = {
         var p = Path()
-        p.move(to: CGPoint(x: 39, y: 143))
-        p.addCurve(to: CGPoint(x: 19, y: 118), control1: CGPoint(x: 12, y: 149), control2: CGPoint(x: 9, y: 132))
-        p.addLine(to: CGPoint(x: 40, y: 46))
-        p.addCurve(to: CGPoint(x: 105, y: 29), control1: CGPoint(x: 48, y: 18), control2: CGPoint(x: 83, y: 16))
-        p.addCurve(to: CGPoint(x: 106, y: 76), control1: CGPoint(x: 133, y: 44), control2: CGPoint(x: 125, y: 66))
-        p.addCurve(to: CGPoint(x: 108, y: 127), control1: CGPoint(x: 139, y: 87), control2: CGPoint(x: 127, y: 115))
-        p.addCurve(to: CGPoint(x: 39, y: 143), control1: CGPoint(x: 89, y: 146), control2: CGPoint(x: 63, y: 146))
+        p.move(to: CGPoint(x: 104, y: 102))
+        p.addCurve(to: CGPoint(x: 200, y: 18), control1: CGPoint(x: 104, y: 46), control2: CGPoint(x: 144, y: 18))
+        p.addCurve(to: CGPoint(x: 296, y: 102), control1: CGPoint(x: 256, y: 18), control2: CGPoint(x: 296, y: 46))
+        p.addLine(to: CGPoint(x: 296, y: 166))
+        p.addQuadCurve(to: CGPoint(x: 264, y: 156), control: CGPoint(x: 280, y: 174))
+        p.addQuadCurve(to: CGPoint(x: 232, y: 166), control: CGPoint(x: 248, y: 146))
+        p.addQuadCurve(to: CGPoint(x: 200, y: 156), control: CGPoint(x: 216, y: 174))
+        p.addQuadCurve(to: CGPoint(x: 168, y: 166), control: CGPoint(x: 184, y: 146))
+        p.addQuadCurve(to: CGPoint(x: 136, y: 156), control: CGPoint(x: 152, y: 174))
+        p.addQuadCurve(to: CGPoint(x: 104, y: 166), control: CGPoint(x: 120, y: 146))
         p.closeSubpath()
-        p.addRoundedRect(in: CGRect(x: 64, y: 42, width: 29, height: 22), cornerSize: CGSize(width: 9, height: 9))
-        p.addRoundedRect(in: CGRect(x: 52, y: 87, width: 34, height: 25), cornerSize: CGSize(width: 10, height: 10))
         return p
     }()
 
@@ -74,10 +77,9 @@ enum BooVector {
 
     static func layers(for pose: MascotPose) -> [MascotLayer] {
         let breath = CGAffineTransform(translationX: 0, y: -pose.breath)
-        let rightLetter = CGAffineTransform(translationX: 260, y: 0)
         var result = [
-            MascotLayer(name: "left-b", path: letter.applying(breath), color: cream),
-            MascotLayer(name: "right-b", path: letter.applying(rightLetter).applying(breath), color: cream)
+            MascotLayer(name: "ghost-body", path: letter.applying(breath), color: ghostFill),
+            MascotLayer(name: "ghost-outline", path: letter.applying(breath), color: ghostStroke, stroke: 3)
         ]
         for (name, x, blink) in [("left", CGFloat(162), pose.leftBlink), ("right", CGFloat(238), pose.rightBlink)] {
             let height = 74 * (1 - blink)
@@ -134,7 +136,7 @@ struct MascotFrame: View {
         }
         .frame(width: width, height: width * 145 / 300)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("BooB")
+        .accessibilityLabel("Ghosty")
     }
 }
 

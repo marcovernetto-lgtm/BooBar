@@ -8,6 +8,10 @@ struct MenuBarApp: Sendable {
 
 enum MenuBarReader {
     static func read(_ apps: [MenuBarApp], on screen: CGRect) throws -> [PositionedIcon] {
+        try readAll(apps, screens: [screen], targetMaxX: screen.maxX)
+    }
+
+    static func readAll(_ apps: [MenuBarApp], screens: [CGRect], targetMaxX: Double) throws -> [PositionedIcon] {
         let deadline = Date().addingTimeInterval(3)
         var icons: [PositionedIcon] = []
         for app in apps {
@@ -28,9 +32,11 @@ enum MenuBarReader {
                 var extent = CGSize.zero
                 guard AXValueGetValue(position as! AXValue, .cgPoint, &origin),
                       AXValueGetValue(size as! AXValue, .cgSize, &extent),
-                      extent.width > 1, extent.height > 1, extent.height < 80,
-                      screen.contains(CGPoint(x: origin.x + extent.width/2, y: origin.y + extent.height/2)) else { continue }
-                icons.append(PositionedIcon(bundleID: app.bundleID, x: origin.x + extent.width/2))
+                      extent.width > 1, extent.height > 1, extent.height < 80 else { continue }
+                let center = CGPoint(x: origin.x + extent.width / 2, y: origin.y + extent.height / 2)
+                guard let matched = screens.first(where: { $0.contains(center) }) else { continue }
+                let normalizedX = targetMaxX - (matched.maxX - center.x)
+                icons.append(PositionedIcon(bundleID: app.bundleID, x: normalizedX))
             }
         }
         return icons

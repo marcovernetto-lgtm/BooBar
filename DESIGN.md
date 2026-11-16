@@ -1,6 +1,6 @@
 ---
-name: BooBar
-description: Native macOS settings with SecureCopy's petrol and mint appearance and an articulated BooB mascot.
+name: GhostBar
+description: Native macOS settings with SecureCopy's petrol and mint appearance and an articulated Ghosty mascot.
 colors:
   primary: "#287c83"
   accent: "#a4dcd5"

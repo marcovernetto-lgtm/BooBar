@@ -1,7 +1,7 @@
 import XCTest
 import AppKit
 import Carbon
-@testable import BooBar
+@testable import GhostBar
 
 final class UpgradeTests: XCTestCase {
     func testHoverGraceAndKeyboardPin() {
@@ -71,12 +71,14 @@ final class UpgradeTests: XCTestCase {
     }
     @MainActor
     func testSignatureVerificationRejectsAnotherSigningIdentity() throws {
-        let installed = URL(fileURLWithPath: "/Applications/BooBar.app")
+        let installed = ["/Applications/GhostBar.app", "/Applications/BooBar.app"]
+            .map { URL(fileURLWithPath: $0) }
+            .first { FileManager.default.fileExists(atPath: $0.path) } ?? URL(fileURLWithPath: "/Applications/GhostBar.app")
         let current = try XCTUnwrap(Bundle(url: installed)?.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String)
         try UpdateManager.verify(installed, matches: installed, version: current)
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: directory) }
-        let candidate = directory.appendingPathComponent("BooBar.app")
+        let candidate = directory.appendingPathComponent("GhostBar.app")
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false)
         try FileManager.default.copyItem(at: installed, to: candidate)
         let process = Process(); process.executableURL = URL(fileURLWithPath: "/usr/bin/codesign")

@@ -9,7 +9,7 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("BooBar").font(BooPalette.font(28, strong: true)).tracking(-0.6)
+                    Text("GhostBar").font(BooPalette.font(28, strong: true)).tracking(-0.6)
                     Text(text(.tagline))
                         .font(BooPalette.font(14)).foregroundStyle(BooPalette.muted)
                 }

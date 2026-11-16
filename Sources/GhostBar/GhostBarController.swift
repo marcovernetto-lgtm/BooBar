@@ -26,7 +26,7 @@ final class BooBarController: NSObject, NSApplicationDelegate, NSWindowDelegate,
 
     let updater = UpdateManager()
     private let engine = HBMenuBar()
-    private let log = Logger(subsystem: "it.marcovernetto.BooBar", category: "MenuBar")
+    private let log = Logger(subsystem: "it.marcovernetto.GhostBar", category: "MenuBar")
     private var zones = Zones()
     private var mainWall: NSStatusItem!
     private var alwaysWall: NSStatusItem!
@@ -69,7 +69,7 @@ final class BooBarController: NSObject, NSApplicationDelegate, NSWindowDelegate,
         NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(applicationsChanged),
             name: NSWorkspace.didTerminateApplicationNotification, object: nil)
         mode = zones.suspended || zones.assignments.isEmpty ? .suspended : .collapsed
-        apply()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in self?.apply() }
         let event = NSAppleEventManager.shared().currentAppleEvent
         let login = event?.paramDescriptor(forKeyword: AEKeyword(keyAEPropData))?.enumCodeValue == OSType(keyAELaunchedAsLogInItem)
             || event?.paramDescriptor(forKeyword: AEKeyword(keyAELaunchedAsLogInItem))?.booleanValue == true
@@ -86,7 +86,7 @@ final class BooBarController: NSObject, NSApplicationDelegate, NSWindowDelegate,
         if !authorized && !login && !background {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in self?.requestPermission() }
         }
-        log.notice("Avvio BooBar: Accessibility=\(self.authorized), nativeAPI=\(self.nativeAvailable), impostazioni=\(self.settingsVisible), login=\(self.loginItemStatus.rawValue)")
+        log.notice("Avvio GhostBar: Accessibility=\(self.authorized), nativeAPI=\(self.nativeAvailable), impostazioni=\(self.settingsVisible), login=\(self.loginItemStatus.rawValue)")
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
@@ -107,13 +107,22 @@ final class BooBarController: NSObject, NSApplicationDelegate, NSWindowDelegate,
         let item = NSStatusBar.system.statusItem(withLength: 22)
         item.autosaveName = autosave
         item.isVisible = true
-        item.button?.title = title
-        item.button?.font = .monospacedSystemFont(ofSize: 16, weight: title == ":" ? .semibold : .regular)
+        let img = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { rect in
+            let font = NSFont.monospacedSystemFont(ofSize: 16, weight: title == ":" ? .semibold : .regular)
+            let attrs: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: NSColor.black]
+            let s = NSAttributedString(string: title, attributes: attrs)
+            let sz = s.size()
+            s.draw(at: NSPoint(x: (rect.width - sz.width) / 2, y: (rect.height - sz.height) / 2 + 1))
+            return true
+        }
+        img.isTemplate = true
+        item.button?.image = img
+        item.button?.title = ""
         item.button?.target = self
         item.button?.action = action
         item.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
         item.button?.toolTip = language.text(title == ":" ? .mainTip : .permanentTip)
-        item.button?.setAccessibilityLabel(title == ":" ? "BooBar" : language.text(.permanentWall))
+        item.button?.setAccessibilityLabel(title == ":" ? "GhostBar" : language.text(.permanentWall))
         return item
     }
 
@@ -138,7 +147,7 @@ final class BooBarController: NSObject, NSApplicationDelegate, NSWindowDelegate,
             let host = NSHostingController(rootView: SettingsView(controller: self))
             host.sizingOptions = [.minSize, .intrinsicContentSize, .maxSize, .preferredContentSize]
             let window = NSWindow(contentViewController: host)
-            window.title = "BooBar"
+            window.title = "GhostBar"
             window.styleMask = [.titled, .closable, .miniaturizable, .fullSizeContentView]
             window.titlebarAppearsTransparent = true
             window.titleVisibility = .hidden
@@ -208,7 +217,7 @@ final class BooBarController: NSObject, NSApplicationDelegate, NSWindowDelegate,
     func restart() {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/sh")
-        process.arguments = ["-c", "sleep 0.5; exec /usr/bin/open -a \"$1\"", "BooBar", Bundle.main.bundleURL.path]
+        process.arguments = ["-c", "sleep 0.5; exec /usr/bin/open -a \"$1\"", "GhostBar", Bundle.main.bundleURL.path]
         do { try process.run(); NSApp.terminate(nil) }
         catch { problem = .restartFailure }
     }
@@ -216,7 +225,9 @@ final class BooBarController: NSObject, NSApplicationDelegate, NSWindowDelegate,
     @objc private func mainClicked() {
         if NSApp.currentEvent?.type == .rightMouseUp { showSettings(); return }
         guard authorized else { showSettings(); return }
-        transition(mode == .collapsed ? .expanded : .collapsed)
+        if mode == .collapsed { transition(.expanded) }
+        else if mode == .expanded { collapseFromExpanded() }
+        else { transition(.collapsed) }
     }
 
     @objc private func alwaysClicked() {
@@ -253,15 +264,28 @@ final class BooBarController: NSObject, NSApplicationDelegate, NSWindowDelegate,
         if Date().timeIntervalSince(permissionCheck) > (settingsVisible ? 1 : 5) {
             permissionCheck = Date()
             refreshPermission()
+            if authorized, nativeAvailable, mode == .collapsed || mode == .expanded {
+                let hidden = zones.hidden(in: mode)
+                if let currentAllowed,
+                   NSWorkspace.shared.runningApplications.contains(where: {
+                       guard let id = $0.bundleIdentifier, !hidden.contains(id) else { return false }
+                       return !currentAllowed.contains(id)
+                   }) {
+                    apply()
+                }
+            }
         }
-        guard authorized, nativeAvailable, let wallFrame = frame(mainWall) else { return }
         let pointer = NSEvent.mouseLocation
+        let pointerScreen = NSScreen.screens.first { $0.frame.contains(pointer) }
+        guard authorized, nativeAvailable,
+              let activeScreen = pointerScreen ?? mainWall.button?.window?.screen,
+              let wallFrame = wallFrame(on: activeScreen, for: mainWall) else { return }
         let nearBar = NSScreen.screens.contains { $0.frame.contains(pointer) && pointer.y > $0.frame.maxY - 80 }
         scheduleTimer(BarInteraction.interval(expanded: mode == .expanded || mode == .arranging, nearBar: nearBar))
         let flags = NSEvent.modifierFlags
         if !flags.contains(.command) && !flags.contains(.control) { suppressArrangement = false }
         guard !recordingShortcut, !suppressArrangement else { return }
-        let moving = flags.contains(.command) && (flags.contains(.shift) || NSEvent.pressedMouseButtons != 0)
+        let moving = flags.contains(.command) && nearBar && (flags.contains(.shift) || NSEvent.pressedMouseButtons != 0)
         if moving { beginArrangement(); return }
         if mode == .arranging {
             if NSEvent.pressedMouseButtons == 0 && Date().timeIntervalSince(lastGesture) > 0.6 { commitPositions() }
@@ -279,7 +303,9 @@ final class BooBarController: NSObject, NSApplicationDelegate, NSWindowDelegate,
             // Query window metadata only once the pointer has actually left the bar.
             let pressed = NSEvent.pressedMouseButtons != 0
             let popup = !inMenuBar && !pressed && !interaction.pinned && menuIsOpen()
-            if interaction.shouldCollapse(now: Date(), inBar: inMenuBar, pressed: pressed, popup: popup) { transition(.collapsed) }
+            if interaction.shouldCollapse(now: Date(), inBar: inMenuBar, pressed: pressed, popup: popup) {
+                collapseFromExpanded()
+            }
         }
     }
 
@@ -295,9 +321,12 @@ final class BooBarController: NSObject, NSApplicationDelegate, NSWindowDelegate,
     private func toggleFromShortcut() {
         guard authorized, nativeAvailable, mode != .arranging, !recordingShortcut else { return }
         suppressArrangement = true
-        let expand = mode != .expanded
-        transition(expand ? .expanded : .collapsed)
-        interaction.pinned = expand
+        if mode != .expanded {
+            transition(.expanded)
+            interaction.pinned = true
+        } else {
+            collapseFromExpanded()
+        }
     }
 
     func recordShortcut() {
@@ -330,9 +359,49 @@ final class BooBarController: NSObject, NSApplicationDelegate, NSWindowDelegate,
         shortcutMonitor = nil; recordingShortcut = false
     }
 
+    private func collapseFromExpanded() {
+        let pointer = NSEvent.mouseLocation
+        guard mode == .expanded, !scanning,
+              let screen = NSScreen.screens.first(where: { $0.frame.contains(pointer) }) ?? mainWall.button?.window?.screen,
+              let main = wallFrame(on: screen, for: mainWall) else {
+            transition(.collapsed)
+            return
+        }
+        let hiddenIDs = Set(zones.assignments.compactMap { $0.value != .visible ? $0.key : nil })
+        let apps = NSWorkspace.shared.runningApplications.compactMap { app -> MenuBarApp? in
+            guard let id = app.bundleIdentifier, hiddenIDs.contains(id), !app.isTerminated else { return nil }
+            return MenuBarApp(pid: app.processIdentifier, bundleID: id)
+        }
+        guard !apps.isEmpty else { transition(.collapsed); return }
+        let top = NSScreen.screens.first?.frame.maxY ?? screen.frame.maxY
+        let targetMaxX = screen.frame.maxX
+        let allBounds = NSScreen.screens.map {
+            CGRect(x: $0.frame.minX, y: top - $0.frame.maxY, width: $0.frame.width, height: $0.frame.height)
+        }
+        let capturedRevision = revision
+        scanning = true
+        Task {
+            defer { scanning = false }
+            let icons = try? await Task.detached { try MenuBarReader.readAll(apps, screens: allBounds, targetMaxX: targetMaxX) }.value
+            guard capturedRevision == revision, mode == .expanded else { return }
+            if let icons {
+                var changed = false
+                for icon in icons where icon.x > main.midX && zones.assignments[icon.bundleID] != .visible {
+                    zones.assignments[icon.bundleID] = .visible
+                    changed = true
+                }
+                if changed { save() }
+            }
+            transition(.collapsed)
+        }
+    }
+
     private func commitPositions() {
-        guard !scanning, let main = frame(mainWall), let permanent = frame(alwaysWall),
-              let screen = mainWall.button?.window?.screen else { return }
+        let pointer = NSEvent.mouseLocation
+        guard !scanning,
+              let screen = NSScreen.screens.first(where: { $0.frame.contains(pointer) }) ?? mainWall.button?.window?.screen,
+              let main = wallFrame(on: screen, for: mainWall),
+              let permanent = wallFrame(on: screen, for: alwaysWall) else { return }
         guard permanent.midX < main.midX else { fail(.reversedWalls); return }
         let ignored = Set([Bundle.main.bundleIdentifier ?? "", "com.apple.controlcenter",
                            "com.apple.systemuiserver", "com.apple.MenuBarAgent"])
@@ -341,15 +410,17 @@ final class BooBarController: NSObject, NSApplicationDelegate, NSWindowDelegate,
             return MenuBarApp(pid: app.processIdentifier, bundleID: id)
         }
         let top = NSScreen.screens.first?.frame.maxY ?? screen.frame.maxY
-        let bounds = CGRect(x: screen.frame.minX, y: top - screen.frame.maxY,
-                            width: screen.frame.width, height: screen.frame.height)
+        let targetMaxX = screen.frame.maxX
+        let allBounds = NSScreen.screens.map {
+            CGRect(x: $0.frame.minX, y: top - $0.frame.maxY, width: $0.frame.width, height: $0.frame.height)
+        }
         let capturedRevision = revision
         let gestureTime = lastGesture
         scanning = true
         Task {
             defer { scanning = false }
             do {
-                let icons = try await Task.detached { try MenuBarReader.read(apps, on: bounds) }.value
+                let icons = try await Task.detached { try MenuBarReader.readAll(apps, screens: allBounds, targetMaxX: targetMaxX) }.value
                 guard capturedRevision == revision, gestureTime == lastGesture, mode == .arranging,
                       authorized, !NSEvent.modifierFlags.contains(.command), NSEvent.pressedMouseButtons == 0 else { return }
                 try zones.arrange(icons, permanentWall: permanent.midX, mainWall: main.midX)
@@ -366,8 +437,7 @@ final class BooBarController: NSObject, NSApplicationDelegate, NSWindowDelegate,
     private func apply() {
         let hidden = zones.hidden(in: mode)
         guard authorized, nativeAvailable, !hidden.isEmpty else { revealEverything(); return }
-        // Signing metadata is stable for a running process; refresh only when apps change.
-        if identities == nil { identities = NSWorkspace.shared.runningApplications.compactMap(MenuBarIdentity.read) }
+        identities = NSWorkspace.shared.runningApplications.compactMap(MenuBarIdentity.read)
         var allowed = MenuBarIdentity.allowed(identities ?? [], hiding: hidden)
         allowed.insert(Bundle.main.bundleIdentifier ?? "it.marcovernetto.Hidebar")
         guard allowed != currentAllowed else { return }
@@ -409,15 +479,29 @@ final class BooBarController: NSObject, NSApplicationDelegate, NSWindowDelegate,
 
     @objc private func applicationsChanged() {
         identities = nil
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
-            self?.identities = nil
-            self?.apply()
+        for delay in [0.4, 1.8] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.identities = nil
+                self?.apply()
+            }
         }
     }
 
     private func frame(_ item: NSStatusItem?) -> CGRect? {
         guard let button = item?.button, let window = button.window else { return nil }
         return window.convertToScreen(button.convert(button.bounds, to: nil))
+    }
+
+    private func wallFrame(on screen: NSScreen, for item: NSStatusItem?) -> CGRect? {
+        guard let rect = frame(item), let source = item?.button?.window?.screen else { return nil }
+        if source == screen { return rect }
+        let thickness = NSStatusBar.system.thickness
+        return CGRect(
+            x: screen.frame.maxX - (source.frame.maxX - rect.minX),
+            y: screen.frame.maxY - thickness,
+            width: rect.width,
+            height: thickness
+        )
     }
 
     private func menuIsOpen() -> Bool {
